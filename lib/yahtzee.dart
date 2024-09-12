@@ -60,8 +60,11 @@ class YahtzeeHomeState extends State<YahtzeeHome>
   }
 }
 
+// shows a box with dots and a 'hold' button
+// debugging: and a 'roll' button
 class Dice extends StatefulWidget
 {
+  // ds is named so we can have roll call it.
   final DiceState ds = DiceState();
   @override
   State<Dice> createState() => ds;
@@ -72,11 +75,12 @@ class Dice extends StatefulWidget
 
 class DiceState extends State<Dice>
 {
-  var face = 0;
+  var face = 0; // number of dots showing in this Dice (die)
   bool holding = false;
   final randy = Random();
 
-  // change face to 1-6 randomly IFF not holding
+  // change face to 1-6 randomly IFF not holding.
+  // note: this sets state
   int roll()
   { if (!holding)
     { setState
@@ -86,6 +90,8 @@ class DiceState extends State<Dice>
     return face;
   }
 
+  // puts up various dots, depending on the value of face.
+  // Also add the 'hold' and 'roll' buttons.
   Widget build( BuildContext context )
   {
     List<Dot> dots = [];
@@ -105,6 +111,7 @@ class DiceState extends State<Dice>
     { dots.add( Dot(top:40,left:45) ); 
     }
 
+    // the box with dots and two buttons
     return Column
     ( children: 
       [ Container
@@ -129,8 +136,8 @@ class DiceState extends State<Dice>
   }
 }
 
-// is one dot on one face of a Dice (die).
-// It knows where it is suppose to be because it 
+// is one dot on the (showing) face of a Dice (die).
+// A Dot knows where it is suppose to be because it 
 // extends a Positioned.  The coordinates have to be
 // named in the constructor call.
 class Dot extends Positioned
