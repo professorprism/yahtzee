@@ -1,7 +1,5 @@
 // Barrett Koster
 // This is a finished Yahtzee roller
-// tweak to make git work
-// and again
 
 import "package:flutter/material.dart";
 import "dart:math";
@@ -18,7 +16,7 @@ class Yahtzee extends StatelessWidget
   @override
   Widget build( BuildContext context )
   { return MaterialApp
-    ( title: "yahtzee",
+    ( title: "yahtzee - Barrett",
       home: YahtzeeHome(),
     );
   }
@@ -46,14 +44,15 @@ class YahtzeeHomeState extends State<YahtzeeHome>
           ( onPressed: ()
             { setState
               ( () 
-                { for ( Dice d in theDice )
-                  { d.roll();   } 
+                { total = 0;
+                  for ( Dice d in theDice )
+                  { total += d.roll(); } 
                 }
               );
             },
-            child: Text("roll all"),
+            child: Text("roll all",style:TextStyle(fontSize:30)),
           ),
-          Text("total $total"),
+          Text("total $total",style:TextStyle(fontSize:30)),
           Row( children: theDice, ),
         ]
       ),
@@ -67,22 +66,24 @@ class Dice extends StatefulWidget
   @override
   State<Dice> createState() => ds;
 
-  void roll() { ds.roll(); }
+  // pass-through function.  
+  int roll() { return ds.roll(); }
 }
 
 class DiceState extends State<Dice>
 {
-  var face = 5;
+  var face = 0;
   bool holding = false;
   final randy = Random();
 
-  void roll()
+  // change face to 1-6 randomly IFF not holding
+  int roll()
   { if (!holding)
     { setState
       ( () {face = randy.nextInt(6) + 1; }
       );
-      
     }
+    return face;
   }
 
   Widget build( BuildContext context )
@@ -96,11 +97,11 @@ class DiceState extends State<Dice>
     { dots.add( Dot(top:10,left:70) );
       dots.add( Dot(top:70, left:20) );
     }
-    if (face==4 || face==6 )
+    if (face==4 || face==6 ) // middle side dots
     { dots.add( Dot(top:40,left:20) );
       dots.add( Dot(top:40, left:70) );
     }
-    if ( face==1 || face==3 || face==5 )
+    if ( face==1 || face==3 || face==5 ) // center dot
     { dots.add( Dot(top:40,left:45) ); 
     }
 
@@ -118,11 +119,20 @@ class DiceState extends State<Dice>
         ( onPressed: (){ setState((){ holding = !holding;}); },
           child: Text("hold"),
         ),
+        // just for debugging
+        FloatingActionButton
+        ( onPressed: (){ setState((){ roll(); }); },
+          child: Text("roll"),
+        ),
       ],
     );
   }
 }
 
+// is one dot on one face of a Dice (die).
+// It knows where it is suppose to be because it 
+// extends a Positioned.  The coordinates have to be
+// named in the constructor call.
 class Dot extends Positioned
 {
   Dot(  {super.top, super.left } )
