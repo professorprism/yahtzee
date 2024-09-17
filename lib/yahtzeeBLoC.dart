@@ -1,10 +1,25 @@
 // Barrett Koster
-// This is a finished Yahtzee roller
+// This is a finished Yahtzee roller.
+// I am converting it to BLoC.
 
-import "package:flutter/material.dart";
 import "dart:math";
+import "package:flutter/material.dart";
+import "package:flutter_bloc/flutter_bloc.dart";
 
-void main25() // 25
+class SumState
+{
+  int sum;
+
+  SumState( this.sum );
+}
+class SumCubit extends Cubit<SumState>
+{
+  SumCubit() : super( SumState(0) );
+
+  void update(int s) { emit(SumState(s)); }
+}
+
+void main() // 27
 {
   runApp(Yahtzee());
 }
@@ -15,49 +30,52 @@ class Yahtzee extends StatelessWidget
 
   @override
   Widget build( BuildContext context )
-  { return MaterialApp
-    ( title: "yahtzee - Barrett",
-      home: YahtzeeHome(),
-    );
-  }
-}
-
-class YahtzeeHome extends StatefulWidget
-{
-  @override
-  State<YahtzeeHome> createState() => YahtzeeHomeState();
-}
-
-class YahtzeeHomeState extends State<YahtzeeHome>
-{
-  var total = 0;
-  List<Dice> theDice = [Dice(),Dice(),Dice(),Dice(),Dice(), ];
-
-  @override
-  Widget build( BuildContext context )
-  { 
-    return Scaffold
-    ( appBar: AppBar(title: const Text("yahtzee")),
-      body: Column
-      ( children:
-        [ FloatingActionButton
-          ( onPressed: ()
-            { setState
-              ( () 
-                { total = 0;
-                  for ( Dice d in theDice )
-                  { total += d.roll(); } 
-                }
-              );
-            },
-            child: Text("roll all",style:TextStyle(fontSize:30)),
-          ),
-          Text("total $total",style:TextStyle(fontSize:30)),
-          Row( children: theDice, ),
-        ]
+  { return BlocProvider<SumCubit>
+    ( create: (context) => SumCubit(),
+      child:  MaterialApp
+      ( title: "yahtzeeBLoC - Barrett",
+        home: YahtzeeHome(),
       ),
     );
   }
+}
+
+class YahtzeeHome extends StatelessWidget
+{
+  List<Dice> theDice = [Dice(),Dice(),Dice(),Dice(),Dice(), ];
+  @override
+  Widget build( BuildContext context )
+  { return Scaffold
+    ( appBar: AppBar(title: const Text("yahtzeeBLoC")),
+      body: BlocBuilder<SumCubit,SumState>
+      ( builder: (context,sumState)
+        { return Column 
+          ( children:
+            [ FloatingActionButton
+              ( onPressed: ()
+                { int sum = rollAll();
+                  SumCubit sc = 
+                    BlocProvider.of<SumCubit>(context);
+                  sc.update(sum);
+                },
+                child: const Text("roll all",style:TextStyle(fontSize:30)),
+              ),
+              Text("total ${sumState.sum}",style:const TextStyle(fontSize:30)),
+              Row( children: theDice, ),
+            ]
+          );
+        },
+      ),
+    );
+  }
+
+  int rollAll()
+  { int total = 0;
+    for ( Dice d in theDice )
+    { total += d.roll(); }
+    return total;
+  }
+
 }
 
 // shows a box with dots and a 'hold' button
