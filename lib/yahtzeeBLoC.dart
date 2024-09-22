@@ -19,7 +19,7 @@ class SumCubit extends Cubit<SumState>
   void update(int s) { emit(SumState(s)); }
 }
 
-void main() // 27
+void main27() // 27
 {
   runApp(Yahtzee());
 }
@@ -54,9 +54,9 @@ class YahtzeeHome extends StatelessWidget
             [ FloatingActionButton
               ( onPressed: ()
                 { int sum = rollAll();
-                  SumCubit sc = 
+                  SumCubit sumCubit = 
                     BlocProvider.of<SumCubit>(context);
-                  sc.update(sum);
+                  sumCubit.update(sum);
                 },
                 child: const Text("roll all",style:TextStyle(fontSize:30)),
               ),
@@ -72,47 +72,51 @@ class YahtzeeHome extends StatelessWidget
   int rollAll()
   { int total = 0;
     for ( Dice d in theDice )
-    { total += d.roll(); }
+    { total += d.d1.roll(); }
     return total;
   }
+}
 
+class DiceState
+{
+   int face; // number facing up when rolled
+   bool hold; // true means do not change face when rolled
+
+   DiceState( this.face, this.hold );
+}
+class DiceCubit extends Cubit<DiceState>
+{
+  DiceCubit() : super( DiceState(0,false) );
+
+  void updateHold( bool h ){ emit(DiceState(state.face,h) ); }
+  void updateFace(  int f ){ emit(DiceState(f,state.hold) ); }
 }
 
 // shows a box with dots and a 'hold' button
 // debugging: and a 'roll' button
-class Dice extends StatefulWidget
-{
-  // ds is named so we can have roll call it.
-  final DiceState ds = DiceState();
-  @override
-  State<Dice> createState() => ds;
-
-  // pass-through function.  
-  int roll() { return ds.roll(); }
+class Dice extends StatelessWidget
+{ late Dice1 d1;
+  Widget build( BuildContext context )
+  { return BlocProvider<DiceCubit>
+    ( create: (cotext) => DiceCubit(),
+      child: BlocBuilder<DiceCubit,DiceState>
+      ( builder: (context,state)
+        { return d1=Dice1(); },
+      ),
+    );
+  }
 }
 
-class DiceState extends State<Dice>
-{
-  var face = 0; // number of dots showing in this Dice (die)
-  bool holding = false;
-  final randy = Random();
-
-  // change face to 1-6 randomly IFF not holding.
-  // note: this sets state
-  int roll()
-  { if (!holding)
-    { setState
-      ( () {face = randy.nextInt(6) + 1; }
-      );
-    }
-    return face;
-  }
-
-  // puts up various dots, depending on the value of face.
-  // Also add the 'hold' and 'roll' buttons.
+class Dice1 extends StatelessWidget
+{ static final randy = Random();
+  late BuildContext bc;
   Widget build( BuildContext context )
-  {
+  { bc = context;
     List<Dot> dots = [];
+    DiceCubit dCubit = BlocProvider.of<DiceCubit>(context);
+    DiceState dState = dCubit.state;
+    int face = dState.face;
+    bool holding = dState.hold;
     if ( face>1 ) // upper left and lower right
     { dots.add( Dot(top:10,left:20) );
       dots.add( Dot(top:70, left:70) );
@@ -141,16 +145,28 @@ class DiceState extends State<Dice>
           child: Stack( children:dots, ),
         ),
         FloatingActionButton
-        ( onPressed: (){ setState((){ holding = !holding;}); },
-          child: Text("hold"),
+        ( onPressed: (){ dCubit.updateHold(!dState.hold); },
+          child: const Text("hold"),
         ),
         // just for debugging
         FloatingActionButton
-        ( onPressed: (){ setState((){ roll(); }); },
+        ( onPressed: () { dCubit.updateFace( roll() ); },
           child: Text("roll"),
         ),
       ],
     );
+  }
+
+  int roll()
+  {
+    DiceCubit dCubit = BlocProvider.of<DiceCubit>(bc);
+    DiceState dState = dCubit.state;
+    int f = dState.face;
+    if ( !dState.hold )
+    { f = randy.nextInt(6)+1; 
+      dCubit.updateFace(f);
+    }
+    return f;
   }
 }
 
