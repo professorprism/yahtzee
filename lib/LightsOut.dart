@@ -36,9 +36,13 @@ class LightsOut extends StatelessWidget
   Widget build( BuildContext context )
   { return BlocProvider<PanelCubit>
     ( create: (context) => PanelCubit(9),
-      child: MaterialApp
-      ( title: "LightsOut - Barrett",
-        home: LightsOutHome(),
+      child: BlocBuilder<PanelCubit,PanelState>
+      ( builder: (context, panelState)
+        { return MaterialApp
+          ( title: "LightsOut - Barrett",
+            home: LightsOutHome(),
+          );
+        },
       ),
     );
   }
@@ -48,14 +52,10 @@ class LightsOutHome extends StatelessWidget
 {
   @override
   Widget build( BuildContext context )
-  { return Scaffold
+  { PanelCubit pc = BlocProvider.of<PanelCubit>(context);
+    return Scaffold
     ( appBar: AppBar(title: Text("Lights Out - Barrett") ),
-      body: BlocBuilder<PanelCubit,PanelState>
-      ( builder: (context,panelState)
-        { PanelCubit pc = BlocProvider.of<PanelCubit>(context);
-          return Row( children: pc.state.panel, );
-        },
-      ),
+      body: Row( children: pc.state.panel, ),
     );
   }
 }
