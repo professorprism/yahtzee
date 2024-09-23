@@ -11,7 +11,8 @@ class PanelState
   List<Light> panel = [];
 
   PanelState( int n ) 
-  { for ( int i=0; i<n; i++ )
+  { panel = [];
+    for ( int i=0; i<n; i++ )
     { panel.add(Light()); }
     for ( int i=1; i<n-1; i++ )
     { panel[i].addNeighbor(panel[i-1]);
@@ -24,6 +25,8 @@ class PanelState
 class PanelCubit extends Cubit<PanelState>
 {
   PanelCubit(int n) : super( PanelState(n) );
+
+  void update( int n ) { emit( PanelState(n) ); }
 }
 
 void main() // 123
@@ -34,16 +37,9 @@ class LightsOut extends StatelessWidget
 { LightsOut({super.key});
   @override
   Widget build( BuildContext context )
-  { return BlocProvider<PanelCubit>
-    ( create: (context) => PanelCubit(9),
-      child: BlocBuilder<PanelCubit,PanelState>
-      ( builder: (context, panelState)
-        { return MaterialApp
-          ( title: "LightsOut - Barrett",
-            home: LightsOutHome(),
-          );
-        },
-      ),
+  { return  MaterialApp
+    ( title: "LightsOut - Barrett",
+      home: LightsOutHome(),
     );
   }
 }
@@ -52,10 +48,39 @@ class LightsOutHome extends StatelessWidget
 {
   @override
   Widget build( BuildContext context )
-  { PanelCubit pc = BlocProvider.of<PanelCubit>(context);
-    return Scaffold
+  { return Scaffold
     ( appBar: AppBar(title: Text("Lights Out - Barrett") ),
-      body: Row( children: pc.state.panel, ),
+      body: LOBody(),
+    );
+  }
+}
+
+class LOBody extends StatelessWidget
+{ 
+  Widget build( BuildContext context )
+  { TextEditingController tec = TextEditingController();
+    tec.text="9";
+    return BlocProvider<PanelCubit>
+    ( create: (context) => PanelCubit(9),
+      child: BlocBuilder<PanelCubit,PanelState>
+      ( builder: (context, panelState)
+        { return Column
+          ( children: 
+            [ Row( children: 
+                BlocProvider.of<PanelCubit>(context).state.panel, 
+              ),
+              TextField( controller: tec),
+              FloatingActionButton
+              ( onPressed: ()
+                { int n = int.parse(tec.text);
+                  BlocProvider.of<PanelCubit>(context).update(n);
+                },
+                child: Text("new number of lights"),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -84,41 +109,51 @@ class Light extends StatelessWidget
 
   void addNeighbor( Light li ) { neighbors.add(li); }
 
-  late LightCubit lc;
+  late BuildContext bc;
   
   @override
   Widget build( BuildContext context )
   { return BlocProvider<LightCubit>
-    ( create: (context) => (lc=LightCubit()),
+    ( create: (context) => (LightCubit()),
       child: BlocBuilder<LightCubit,LightState>
       ( builder: (context, lightState)
-        { LightCubit lc = BlocProvider.of<LightCubit>(context);
-          return Column
-          ( children:
-            [  Container
-              ( height: 60, width: 60,
-                decoration: BoxDecoration
-                ( border: Border.all(width:2),
-                  color: lc.state.isOn? Colors.yellow: Colors.brown,
-                ),
-              ),
-              FloatingActionButton
-              ( onPressed: ()
-                { lc.update( !lc.state.isOn );
-                  for ( Light li in neighbors )
-                  {
-                    li.lc.toggle();
-                  }
-                },
-              ),
-            ],
+        { return Builder
+          ( builder: (context)
+            { LightCubit lc = BlocProvider.of<LightCubit>(context);
+              bc = context;
+              return Column
+                ( children:
+                  [  Container
+                    ( height: 60, width: 60,
+                      decoration: BoxDecoration
+                      ( border: Border.all(width:2),
+                        color: lc.state.isOn
+                          ? Colors.yellow: Colors.brown,
+                      ),
+                    ),
+                    FloatingActionButton
+                    ( onPressed: ()
+                      { lc.update( !BlocProvider.of<LightCubit>(context).state.isOn );
+                        for ( Light li in neighbors )
+                        {
+                          li.toggle();
+                        }
+                      },
+                    ),
+                  ],
+                );
+            },
           );
+         
         },
       ),
     );
   }
 
-  void flip()
-  { 
+  void toggle()
+  {
+    LightCubit lc = BlocProvider.of<LightCubit>(bc);
+    lc.toggle();
   }
 }
+
